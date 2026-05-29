@@ -1,0 +1,126 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Flowera Skybridge Mockup</title>
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <div class="chat-shell">
+      <nav class="side-rail" aria-label="Workspace navigation">
+        <div class="brand-mark" aria-label="Flowera">F</div>
+        <button type="button" aria-label="New request">+</button>
+        <button type="button" aria-label="Search">S</button>
+        <button type="button" aria-label="History">H</button>
+      </nav>
+
+      <main class="conversation">
+        <header class="chat-header">
+          <div>
+            <strong>Flowera</strong>
+            <span>Skybridge MCPD procurement</span>
+          </div>
+          <div class="deployment-pills" aria-label="Deployment status">
+            <span><i></i> Live merchant fetch</span>
+            <span>MCPD ready</span>
+          </div>
+        </header>
+
+        <section class="thread" aria-label="Flower buying conversation">
+          <div class="bubble user-bubble">
+            I want to buy roses for delivery in Berlin tomorrow. Keep it under 55 euros and make it feel like a gift.
+          </div>
+
+          <div class="tool-call">
+            <div class="tool-chip">
+              <span class="tool-logo">F</span>
+              <span class="live-dot"></span>
+              <strong>Flowera MCPD</strong>
+            </div>
+            <p>I'll compare REWE, Blume2000, 24blooms, Fleurop, and Amazon.de for you.</p>
+          </div>
+
+          <section class="result-card" aria-label="Flower search results">
+            <div class="result-toolbar">
+              <div>
+                <strong id="resultTitle">Berlin flowers</strong>
+                <span id="resultSubtitle">Rosen · Sat 30 May · EUR 25-55 · 4 offers found</span>
+              </div>
+              <button class="quiet-button" id="refineButton" type="button">Refine</button>
+            </div>
+
+            <section class="refine-panel" id="refinePanel" hidden aria-label="Refine flower recommendation">
+              <div class="refine-copy">
+                <strong>Make the bouquet feel right</strong>
+                <span>Answer a few tiny questions and Flowera will re-rank the options.</span>
+              </div>
+
+              <div class="refine-grid">
+                <fieldset>
+                  <legend>What's the occasion?</legend>
+                  <div class="choice-row" id="occasionChoices"></div>
+                </fieldset>
+
+                <fieldset>
+                  <legend>What's your relationship?</legend>
+                  <div class="choice-row" id="relationshipChoices"></div>
+                </fieldset>
+
+                <label class="color-field">
+                  Colors they love
+                  <input id="loveColors" type="text" placeholder="e.g. yellow, blush, white" />
+                </label>
+
+                <label class="color-field">
+                  Colors to avoid
+                  <input id="avoidColors" type="text" placeholder="e.g. red, purple" />
+                </label>
+              </div>
+
+              <div class="meaning-note" id="meaningNote"></div>
+              <div class="mood-board" id="moodBoard" aria-label="Visual bouquet style"></div>
+
+              <div class="refine-actions">
+                <button class="quiet-button" id="resetRefinement" type="button">Reset</button>
+                <button class="apply-button" id="applyRefinement" type="button">Apply refinement</button>
+              </div>
+            </section>
+
+            <div class="slot-row" id="slotRow" aria-label="Collected search criteria"></div>
+            <div class="source-status-row" id="sourceStatusRow" aria-label="Merchant source status"></div>
+            <div class="offers-strip" id="offersStrip"></div>
+          </section>
+
+          <div class="bubble assistant-bubble" id="recommendationText">
+            Best match will update after the live merchant pages respond.
+          </div>
+        </section>
+
+        <form class="composer" id="composer">
+          <input
+            id="queryInput"
+            type="text"
+            value="Find red roses near Prenzlauer Allee 42, 10405 Berlin for tomorrow under 55 euros"
+            aria-label="Ask Flowera"
+          />
+          <button type="submit" aria-label="Compare flower offers">Compare</button>
+        </form>
+      </main>
+    </div>
+
+    <div class="drawer-backdrop" id="drawerBackdrop" hidden></div>
+    <aside class="checkout-drawer" id="checkoutDrawer" aria-label="Checkout handoff" aria-hidden="true">
+      <div class="drawer-header">
+        <div>
+          <span>One-click order</span>
+          <h2 id="drawerTitle">Checkout handoff</h2>
+        </div>
+        <button class="close-button" id="closeDrawer" type="button" aria-label="Close">X</button>
+      </div>
+      <div class="drawer-body" id="drawerBody"></div>
+    </aside>
+
+    <script src="./app.js"></script>
+  </body>
+</html>
