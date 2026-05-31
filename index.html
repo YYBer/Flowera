@@ -14,7 +14,7 @@
           <p>Tell me what you need in one sentence. I will turn it into bouquet filters before showing matches.</p>
           <form class="intent-form" id="intentForm">
             <label class="sr-only" for="intentInput">Flower request</label>
-            <textarea id="intentInput" placeholder="e.g. I want to buy some flowers for my mom for her birthday"></textarea>
+            <textarea id="intentInput" placeholder="e.g. I want to buy some flowers for my mom for her birthday">Hi</textarea>
             <div class="intent-actions">
               <button class="intent-submit" type="submit">Find bouquets</button>
             </div>
@@ -23,7 +23,7 @@
         </div>
       </section>
 
-      <section class="refinement-flow" id="refinementFlow" hidden aria-label="Refine my bouquet">
+      <section class="refinement-flow" id="refinementFlow" aria-label="Refine my bouquet">
         <div class="refine-prefill" id="refinePrefill" hidden></div>
         <section class="step-block is-visible" id="occasionStep" aria-label="Occasion">
           <div class="step-prompt">
@@ -136,6 +136,6 @@
     <button class="sticky-refine" id="stickyRefine" type="button" hidden>✦ Refine my bouquet</button>
 
     <script id="flowera-widget-state" type="application/json">{}</script>
-    <script src="./app.js?v=step-skip-20260531"></script>
+    <script src="./app.js?v=refine-visible-20260531"></script>
   </body>
 </html>

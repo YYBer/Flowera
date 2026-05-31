@@ -2,7 +2,7 @@ let offers = [];
 let sourceStatus = [];
 let offersLoading = true;
 let fetchError = "";
-let intakeComplete = false;
+let intakeComplete = true;
 let selectedOfferId = "";
 let checkoutIntent = null;
 let latestToolResult = null;
@@ -118,7 +118,7 @@ const imageFallbacks = [
 ];
 
 const userContext = {
-  rawIntent: "",
+  rawIntent: "Hi",
   locale: detectUserLocale()
 };
 
@@ -157,20 +157,20 @@ const nodes = {
 function detectUserLocale() {
   const options = Intl.DateTimeFormat().resolvedOptions();
   return {
-    locale: options.locale || navigator.language || "de-DE",
+    locale: "en-US",
     timeZone: options.timeZone || "Europe/Berlin",
     city: ""
   };
 }
 
 const refinement = {
-  occasion: "",
+  occasion: "anniversary",
   occasionNote: "",
   relationship: "",
   gender: "",
   age: "",
   aesthetic: "",
-  loveColours: new Set(),
+  loveColours: new Set(["red", "pink"]),
   avoidColours: new Set(),
   palette: "mixed"
 };
@@ -253,7 +253,7 @@ function renderRefinement() {
   renderSavedState(nodes.aestheticSaved, Boolean(refinement.aesthetic), skippedSteps.has("aesthetic"));
   renderSavedState(nodes.colourSaved, Boolean(refinement.loveColours.size || refinement.avoidColours.size || refinement.palette), skippedSteps.has("colour"));
 
-  nodes.recipientStep.classList.toggle("is-visible", occasionReady);
+  nodes.recipientStep.classList.add("is-visible");
   nodes.aestheticStep.classList.toggle("is-visible", Boolean(occasionReady && recipientReady));
   nodes.colourStep.classList.toggle(
     "is-visible",
@@ -447,6 +447,7 @@ function offerTemplate(offer, index) {
             <span class="price-breakdown">${euroExact(offer.price)} + ${euroExact(offer.delivery)} delivery</span>
           </div>
         </div>
+        <p class="shop-line">Shop: ${escapeHTML(offer.merchant)}</p>
         <p class="bouquet-description">${escapeHTML(descriptionFor(offer))}</p>
         <p class="delivery-line">♧ Delivery timing varies by address</p>
         <div class="detail-box">
@@ -586,7 +587,23 @@ function selectionChips() {
 
 function localeSummary() {
   if (userContext.locale.city) return userContext.locale.city;
-  return [userContext.locale.locale, userContext.locale.timeZone].filter(Boolean).join(" / ");
+  return [languageName(userContext.locale.locale), timeZoneName(userContext.locale.timeZone)].filter(Boolean).join(" / ");
+}
+
+function languageName(locale) {
+  if (!locale) return "";
+  const language = locale.split("-")[0];
+  try {
+    return new Intl.DisplayNames(["en"], { type: "language" }).of(language) || "English";
+  } catch {
+    return language === "en" ? "English" : language.toUpperCase();
+  }
+}
+
+function timeZoneName(timeZone) {
+  if (!timeZone) return "";
+  if (timeZone === "Europe/Berlin") return "Berlin time";
+  return timeZone.replace(/_/g, " ");
 }
 
 function revealAndScroll(step) {
@@ -1039,13 +1056,14 @@ function submitIntent(value) {
     return;
   }
 
+  const parsed = parseIntent(intent);
   userContext.rawIntent = intent;
   resetRefinementForIntent();
-  applyParsedIntent(parseIntent(intent));
+  applyParsedIntent(parsed);
+  if (!hasParsedRefinement(parsed)) applyDefaultRefinement();
   intakeComplete = true;
-  nodes.refinementFlow.hidden = true;
-  renderAll();
-  document.querySelector(".summary-bar").scrollIntoView({ block: "start", behavior: "smooth" });
+  nodes.refinementFlow.hidden = false;
+  loadLiveOffers(true);
 }
 
 function resetRefinementForIntent() {
@@ -1063,6 +1081,26 @@ function resetRefinementForIntent() {
   openDetails.clear();
   selectedOfferId = "";
   checkoutIntent = null;
+  userContext.locale.city = "";
+}
+
+function applyDefaultRefinement() {
+  refinement.occasion = "anniversary";
+  refinement.loveColours.add("red");
+  refinement.loveColours.add("pink");
+}
+
+function hasParsedRefinement(parsed) {
+  return Boolean(
+    parsed.occasion ||
+      parsed.relationship ||
+      parsed.gender ||
+      parsed.age ||
+      parsed.aesthetic ||
+      parsed.colours.love.length ||
+      parsed.colours.avoid.length ||
+      parsed.locale.city
+  );
 }
 
 function parseIntent(value) {

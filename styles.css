@@ -23,6 +23,10 @@
   box-sizing: border-box;
 }
 
+[hidden] {
+  display: none !important;
+}
+
 body {
   margin: 0;
   min-width: 320px;
@@ -288,6 +292,7 @@ button {
 
 .bouquet-heading h3,
 .bouquet-heading p,
+.shop-line,
 .bouquet-description,
 .delivery-line,
 .detail-box p {
@@ -301,6 +306,7 @@ button {
 }
 
 .bouquet-heading p,
+.shop-line,
 .delivery-line,
 .merchant-line,
 .price-breakdown,
@@ -308,6 +314,11 @@ button {
   color: var(--muted);
   font-size: 0.82rem;
   line-height: 1.35;
+}
+
+.shop-line {
+  color: var(--ink);
+  font-weight: 800;
 }
 
 .price-stack {
@@ -893,6 +904,7 @@ button {
   }
 
   .bouquet-heading p,
+  .shop-line,
   .delivery-line,
   .merchant-line,
   .price-breakdown,
