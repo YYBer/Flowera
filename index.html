@@ -3,124 +3,138 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Flowera Skybridge Mockup</title>
+    <title>Flowera Bouquet Picker</title>
     <link rel="stylesheet" href="./styles.css" />
   </head>
   <body>
-    <div class="chat-shell">
-      <nav class="side-rail" aria-label="Workspace navigation">
-        <div class="brand-mark" aria-label="Flowera">F</div>
-        <button type="button" aria-label="New request">+</button>
-        <button type="button" aria-label="Search">S</button>
-        <button type="button" aria-label="History">H</button>
-      </nav>
-
-      <main class="conversation">
-        <header class="chat-header">
-          <div>
-            <strong>Flowera</strong>
-            <span>Skybridge MCPD procurement</span>
-          </div>
-          <div class="deployment-pills" aria-label="Deployment status">
-            <span><i></i> Live merchant fetch</span>
-            <span>MCPD ready</span>
-          </div>
-        </header>
-
-        <section class="thread" aria-label="Flower buying conversation">
-          <div class="bubble user-bubble">
-            I want to buy roses for delivery in Berlin tomorrow. Keep it under 55 euros and make it feel like a gift.
-          </div>
-
-          <div class="tool-call">
-            <div class="tool-chip">
-              <span class="tool-logo">F</span>
-              <span class="live-dot"></span>
-              <strong>Flowera MCPD</strong>
+    <main class="flower-app">
+      <section class="assistant-intro" aria-label="Flowera assistant">
+        <span class="assistant-icon" aria-hidden="true">✣</span>
+        <div class="assistant-copy">
+          <p>Tell me what you need in one sentence. I will turn it into bouquet filters before showing matches.</p>
+          <form class="intent-form" id="intentForm">
+            <label class="sr-only" for="intentInput">Flower request</label>
+            <textarea id="intentInput" placeholder="e.g. I want to buy some flowers for my mom for her birthday"></textarea>
+            <div class="intent-actions">
+              <button class="intent-submit" type="submit">Find bouquets</button>
             </div>
-            <p>I'll compare REWE, Blume2000, 24blooms, Fleurop, and Amazon.de for you.</p>
+          </form>
+          <div class="intent-summary" id="intentSummary" hidden></div>
+        </div>
+      </section>
+
+      <section class="refinement-flow" id="refinementFlow" hidden aria-label="Refine my bouquet">
+        <div class="refine-prefill" id="refinePrefill" hidden></div>
+        <section class="step-block is-visible" id="occasionStep" aria-label="Occasion">
+          <div class="step-prompt">
+            <span class="step-number" aria-hidden="true">1</span>
+            <h2>What's the occasion?</h2>
           </div>
-
-          <section class="result-card" aria-label="Flower search results">
-            <div class="result-toolbar">
-              <div>
-                <strong id="resultTitle">Berlin flowers</strong>
-                <span id="resultSubtitle">Rosen · Sat 30 May · EUR 25-55 · 4 offers found</span>
+          <div class="step-card">
+            <div class="step-card-header">
+              <h3>Occasion</h3>
+              <div class="step-card-actions">
+                <span class="saved-pill" id="occasionSaved" hidden>saved</span>
+                <button class="step-skip" type="button" data-skip-step="occasion">Skip</button>
               </div>
-              <button class="quiet-button" id="refineButton" type="button">Refine</button>
             </div>
-
-            <section class="refine-panel" id="refinePanel" hidden aria-label="Refine flower recommendation">
-              <div class="refine-copy">
-                <strong>Make the bouquet feel right</strong>
-                <span>Answer a few tiny questions and Flowera will re-rank the options.</span>
-              </div>
-
-              <div class="refine-grid">
-                <fieldset>
-                  <legend>What's the occasion?</legend>
-                  <div class="choice-row" id="occasionChoices"></div>
-                </fieldset>
-
-                <fieldset>
-                  <legend>What's your relationship?</legend>
-                  <div class="choice-row" id="relationshipChoices"></div>
-                </fieldset>
-
-                <label class="color-field">
-                  Colors they love
-                  <input id="loveColors" type="text" placeholder="e.g. yellow, blush, white" />
-                </label>
-
-                <label class="color-field">
-                  Colors to avoid
-                  <input id="avoidColors" type="text" placeholder="e.g. red, purple" />
-                </label>
-              </div>
-
-              <div class="meaning-note" id="meaningNote"></div>
-              <div class="mood-board" id="moodBoard" aria-label="Visual bouquet style"></div>
-
-              <div class="refine-actions">
-                <button class="quiet-button" id="resetRefinement" type="button">Reset</button>
-                <button class="apply-button" id="applyRefinement" type="button">Apply refinement</button>
-              </div>
-            </section>
-
-            <div class="slot-row" id="slotRow" aria-label="Collected search criteria"></div>
-            <div class="source-status-row" id="sourceStatusRow" aria-label="Merchant source status"></div>
-            <div class="offers-strip" id="offersStrip"></div>
-          </section>
-
-          <div class="bubble assistant-bubble" id="recommendationText">
-            Best match will update after the live merchant pages respond.
+            <div class="pill-row" id="occasionChoices"></div>
+            <label class="text-note">
+              Anything else? <span>optional</span>
+              <textarea id="occasionNote" placeholder="e.g. they just moved into a new place"></textarea>
+            </label>
           </div>
         </section>
 
-        <form class="composer" id="composer">
-          <input
-            id="queryInput"
-            type="text"
-            value="Find red roses near Prenzlauer Allee 42, 10405 Berlin for tomorrow under 55 euros"
-            aria-label="Ask Flowera"
-          />
-          <button type="submit" aria-label="Compare flower offers">Compare</button>
-        </form>
-      </main>
-    </div>
+        <section class="step-block" id="recipientStep" aria-label="Recipient">
+          <div class="step-prompt">
+            <span class="step-number" aria-hidden="true">2</span>
+            <h2>Who are these flowers for?</h2>
+          </div>
+          <div class="step-card">
+            <div class="step-card-header">
+              <h3>About the recipient</h3>
+              <div class="step-card-actions">
+                <span class="saved-pill" id="recipientSaved" hidden>saved</span>
+                <button class="step-skip" type="button" data-skip-step="recipient">Skip</button>
+              </div>
+            </div>
+            <div class="field-group">
+              <span>Your relationship to them</span>
+              <div class="pill-row" id="relationshipChoices"></div>
+            </div>
+            <div class="field-group">
+              <span>Gender</span>
+              <div class="pill-row" id="genderChoices"></div>
+            </div>
+            <div class="field-group">
+              <span>Age</span>
+              <div class="pill-row" id="ageChoices"></div>
+            </div>
+          </div>
+        </section>
 
-    <div class="drawer-backdrop" id="drawerBackdrop" hidden></div>
-    <aside class="checkout-drawer" id="checkoutDrawer" aria-label="Checkout handoff" aria-hidden="true">
-      <div class="drawer-header">
+        <section class="step-block" id="aestheticStep" aria-label="Aesthetic">
+          <div class="step-prompt">
+            <span class="step-number" aria-hidden="true">3</span>
+            <h2>Which of these feels right? Tap any that resonate.</h2>
+          </div>
+          <div class="step-card">
+            <div class="step-card-header">
+              <h3>Aesthetic</h3>
+              <div class="step-card-actions">
+                <span class="saved-pill" id="aestheticSaved" hidden>saved</span>
+                <button class="step-skip" type="button" data-skip-step="aesthetic">Skip</button>
+              </div>
+            </div>
+            <div class="aesthetic-grid" id="aestheticChoices"></div>
+          </div>
+        </section>
+
+        <section class="step-block" id="colourStep" aria-label="Colour">
+          <div class="step-prompt">
+            <span class="step-number" aria-hidden="true">4</span>
+            <h2>Last thing — anything to lean into or avoid colour-wise?</h2>
+          </div>
+          <div class="step-card">
+            <div class="step-card-header">
+              <h3>Colour</h3>
+              <div class="step-card-actions">
+                <span class="saved-pill" id="colourSaved" hidden>saved</span>
+                <button class="step-skip" type="button" data-skip-step="colour">Skip</button>
+              </div>
+            </div>
+            <div class="auto-note">✣ Pre-selected based on the occasion and recipient — tap to refine.</div>
+            <div class="colour-panels">
+              <section>
+                <h4>♡ Love</h4>
+                <div class="swatch-grid" id="loveColourChoices"></div>
+              </section>
+              <section>
+                <h4>⊘ Avoid</h4>
+                <div class="swatch-grid" id="avoidColourChoices"></div>
+              </section>
+            </div>
+            <div class="palette-row" id="paletteChoices"></div>
+            <div class="final-actions">
+              <button class="show-button" id="showBouquets" type="button">Show me bouquets</button>
+            </div>
+          </div>
+        </section>
+      </section>
+
+      <section class="summary-bar" id="summaryBar" hidden aria-label="Search summary">
         <div>
-          <span>One-click order</span>
-          <h2 id="drawerTitle">Checkout handoff</h2>
+          <strong id="resultTitle">Live bouquet matches</strong>
+          <span id="resultSubtitle">Fetching live merchant pages...</span>
         </div>
-        <button class="close-button" id="closeDrawer" type="button" aria-label="Close">X</button>
-      </div>
-      <div class="drawer-body" id="drawerBody"></div>
-    </aside>
+      </section>
 
-    <script src="./app.js"></script>
+      <section class="bouquet-grid" id="offersGrid" hidden aria-label="Bouquet offers"></section>
+    </main>
+
+    <button class="sticky-refine" id="stickyRefine" type="button" hidden>✦ Refine my bouquet</button>
+
+    <script src="./app.js?v=step-skip-20260531"></script>
   </body>
 </html>
