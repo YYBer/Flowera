@@ -1,4 +1,4 @@
-import { useEffect, useMemo, type CSSProperties } from "react";
+import { useMemo, type CSSProperties } from "react";
 import { DataLLM, useToolInfo, useViewState } from "skybridge/web";
 
 type FlowerOffer = {
@@ -89,12 +89,6 @@ export default function SearchFlowersView() {
     }),
     [offers.length, output?.reason, recommendedOffer, selectedOffer, viewState]
   );
-
-  useEffect(() => {
-    if (!viewState.selectedOfferId && recommendedOffer) {
-      setViewState((state) => ({ ...state, selectedOfferId: recommendedOffer.id }));
-    }
-  }, [recommendedOffer, setViewState, viewState.selectedOfferId]);
 
   if (tool.isPending || tool.isIdle) {
     return <div style={styles.shell}>Searching live merchant pages...</div>;

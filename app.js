@@ -612,6 +612,7 @@ function openRefinement() {
 
 function finishRefinement() {
   intakeComplete = true;
+  resetCheckoutIntent();
   loadLiveOffers(true);
   document.querySelector(".summary-bar").scrollIntoView({ block: "start", behavior: "smooth" });
 }
@@ -677,7 +678,7 @@ function ensureSelectedOffer(offerId, currentOffers) {
 function selectOffer(offerId, reason = "selected") {
   if (!offers.some((offer) => offer.id === offerId)) return;
   selectedOfferId = offerId;
-  if (reason !== "checkout") checkoutIntent = null;
+  if (reason !== "checkout") resetCheckoutIntent();
   renderOffers();
   publishWidgetState(reason);
 }
@@ -871,6 +872,8 @@ nodes.stickyRefine.addEventListener("click", openRefinement);
 nodes.showBouquets.addEventListener("click", finishRefinement);
 nodes.occasionNote.addEventListener("input", (event) => {
   refinement.occasionNote = event.target.value;
+  resetCheckoutIntent();
+  publishWidgetState("refinement_changed");
 });
 
 nodes.intentForm.addEventListener("submit", (event) => {
@@ -897,6 +900,7 @@ document.addEventListener("click", (event) => {
 
   if (occasionButton) {
     refinement.occasion = occasionButton.dataset.occasion;
+    resetCheckoutIntent();
     skippedSteps.delete("occasion");
     autoSelectColoursForOccasion(refinement.occasion);
     renderAll();
@@ -920,18 +924,21 @@ document.addEventListener("click", (event) => {
 
   if (aestheticButton) {
     refinement.aesthetic = aestheticButton.dataset.aesthetic;
+    resetCheckoutIntent();
     skippedSteps.delete("aesthetic");
     renderAll();
     revealAndScroll(nodes.colourStep);
   }
 
   if (loveButton) {
+    resetCheckoutIntent();
     toggleSetValue(refinement.loveColours, loveButton.dataset.loveColour);
     refinement.avoidColours.delete(loveButton.dataset.loveColour);
     renderAll();
   }
 
   if (avoidButton) {
+    resetCheckoutIntent();
     toggleSetValue(refinement.avoidColours, avoidButton.dataset.avoidColour);
     refinement.loveColours.delete(avoidButton.dataset.avoidColour);
     renderAll();
@@ -939,6 +946,7 @@ document.addEventListener("click", (event) => {
 
   if (paletteButton) {
     refinement.palette = paletteButton.dataset.palette;
+    resetCheckoutIntent();
     renderAll();
   }
 
@@ -972,7 +980,12 @@ function toggleSetValue(set, value) {
   else set.add(value);
 }
 
+function resetCheckoutIntent() {
+  checkoutIntent = null;
+}
+
 function handleRecipientStepSelection() {
+  resetCheckoutIntent();
   const hasEnoughSelections = recipientSelectionCount() >= 2;
   if (hasEnoughSelections) skippedSteps.delete("recipient");
   renderAll();
@@ -982,6 +995,7 @@ function handleRecipientStepSelection() {
 }
 
 function skipRefinementStep(step) {
+  resetCheckoutIntent();
   skippedSteps.add(step);
 
   if (step === "occasion") {
