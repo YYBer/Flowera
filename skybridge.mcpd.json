@@ -10,11 +10,32 @@
   },
   "tools": [
     {
-      "name": "aggregator_flower_search",
-      "description": "Compares flower offers across 24blooms, Fleurop, Blume2000, Amazon.de, and Rewe.",
+      "name": "searchFlowers",
+      "description": "Searches German flower merchants and returns ranked, structured offers for a delivery request.",
       "mode": "live-page-fetch",
-      "requiredSlots": ["flower_type", "budget_range", "delivery_address", "delivery_date"],
-      "refinementSlots": ["occasion", "relationship_to_recipient", "loved_colors", "avoided_colors", "visual_style"]
+      "http": {
+        "method": "POST",
+        "path": "/api/tools/searchFlowers"
+      },
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "flowerType": { "type": "string" },
+          "location": { "type": "string" },
+          "address": { "type": "string" },
+          "budgetMin": { "type": "number" },
+          "budgetMax": { "type": "number" },
+          "deliveryDate": { "type": "string" },
+          "occasion": { "type": "string" },
+          "relationship": { "type": "string" },
+          "lovedColors": { "type": "string" },
+          "avoidedColors": { "type": "string" },
+          "style": { "type": "string" },
+          "refresh": { "type": "boolean" }
+        }
+      },
+      "requiredSlots": ["flowerType", "budgetMax", "address", "deliveryDate"],
+      "refinementSlots": ["occasion", "relationship", "lovedColors", "avoidedColors", "style"]
     }
   ],
   "views": [

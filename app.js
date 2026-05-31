@@ -325,7 +325,7 @@ function runConversationSearch(event) {
 function applyRefinement() {
   refinement.loveColors = nodes.loveColors.value.trim();
   refinement.avoidColors = nodes.avoidColors.value.trim();
-  renderAll();
+  loadLiveOffers(true);
   nodes.refinePanel.hidden = true;
 }
 
@@ -335,7 +335,7 @@ function resetRefinement() {
   refinement.loveColors = "";
   refinement.avoidColors = "";
   refinement.style = "";
-  renderAll();
+  loadLiveOffers(true);
 }
 
 function openCheckout(offerId) {
@@ -408,7 +408,7 @@ async function loadLiveOffers(refresh = false) {
   renderAll();
 
   try {
-    const response = await fetch(`/api/offers${refresh ? "?refresh=1" : ""}`);
+    const response = await fetch(`/api/offers?${offerQueryString(refresh)}`);
     if (!response.ok) throw new Error(`Offer fetch failed with HTTP ${response.status}`);
     const payload = await response.json();
     offers = payload.offers || [];
@@ -422,6 +422,33 @@ async function loadLiveOffers(refresh = false) {
   }
 
   renderAll();
+}
+
+function offerQueryString(refresh = false) {
+  const [budgetMin, budgetMax] = parseBudgetRange(criteria.budget);
+  const params = new URLSearchParams({
+    flowerType: criteria.flowerType,
+    location: criteria.location,
+    address: criteria.address,
+    deliveryDate: criteria.deliveryDate
+  });
+
+  if (budgetMin !== null) params.set("budgetMin", String(budgetMin));
+  if (budgetMax !== null) params.set("budgetMax", String(budgetMax));
+  if (refinement.occasion) params.set("occasion", refinement.occasion);
+  if (refinement.relationship) params.set("relationship", refinement.relationship);
+  if (refinement.loveColors) params.set("lovedColors", refinement.loveColors);
+  if (refinement.avoidColors) params.set("avoidedColors", refinement.avoidColors);
+  if (refinement.style) params.set("style", refinement.style);
+  if (refresh) params.set("refresh", "1");
+
+  return params.toString();
+}
+
+function parseBudgetRange(value) {
+  const matches = String(value).match(/\d+(?:[.,]\d+)?/g) || [];
+  const numbers = matches.map((item) => Number(item.replace(",", "."))).filter(Number.isFinite);
+  return [numbers[0] ?? null, numbers[1] ?? numbers[0] ?? null];
 }
 
 function closeCheckout() {
