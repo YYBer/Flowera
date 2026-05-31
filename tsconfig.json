@@ -1,0 +1,14 @@
+{
+  "extends": "skybridge/tsconfig.json",
+  "compilerOptions": {
+    "allowJs": true,
+    "esModuleInterop": true,
+    "module": "NodeNext",
+    "moduleResolution": "NodeNext",
+    "resolveJsonModule": true,
+    "strict": true,
+    "verbatimModuleSyntax": false,
+    "types": ["node", "react", "react-dom", "vite/client"]
+  },
+  "include": ["src", ".skybridge/views.d.ts"]
+}

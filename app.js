@@ -3,8 +3,13 @@ let sourceStatus = [];
 let offersLoading = true;
 let fetchError = "";
 let intakeComplete = false;
+let selectedOfferId = "";
+let checkoutIntent = null;
+let latestToolResult = null;
+let widgetStateVersion = 0;
 const openDetails = new Set();
 const skippedSteps = new Set();
+const widgetStateSubscribers = new Set();
 
 const occasionOptions = [
   ["birthday", "Birthday"],
@@ -145,7 +150,8 @@ const nodes = {
   aestheticStep: document.querySelector("#aestheticStep"),
   colourStep: document.querySelector("#colourStep"),
   occasionNote: document.querySelector("#occasionNote"),
-  showBouquets: document.querySelector("#showBouquets")
+  showBouquets: document.querySelector("#showBouquets"),
+  widgetState: document.querySelector("#flowera-widget-state")
 };
 
 function detectUserLocale() {
@@ -167,6 +173,15 @@ const refinement = {
   loveColours: new Set(),
   avoidColours: new Set(),
   palette: "mixed"
+};
+
+const criteria = {
+  flowerType: "Rosen",
+  address: "Prenzlauer Allee 42, 10405 Berlin",
+  budgetMin: 25,
+  budgetMax: 55,
+  deliveryDate: "Tomorrow",
+  recipients: "Gift delivery"
 };
 
 function euro(value) {
@@ -194,6 +209,7 @@ function renderAll() {
   renderRefinement();
   renderOffers();
   renderSummary();
+  publishWidgetState("render");
 }
 
 function renderVisibility() {
@@ -408,7 +424,9 @@ function offerTemplate(offer, index) {
   const badge = index === 0 ? "✣ Best match" : index === 1 ? "✣ Best value" : offer.longevity >= 10 ? "✣ Lasts longest" : "";
   const colourDots = displayColours(offer);
   return `
-    <article class="bouquet-card ${index === 0 ? "is-featured" : ""} ${detailsOpen ? "is-open" : ""}">
+    <article class="bouquet-card ${index === 0 ? "is-featured" : ""} ${detailsOpen ? "is-open" : ""} ${
+      selectedOfferId === offer.id ? "is-selected" : ""
+    }" data-offer-id="${escapeHTML(offer.id)}">
       <div class="bouquet-media">
         <img
           src="${escapeHTML(offer.visualImage)}"
@@ -439,7 +457,7 @@ function offerTemplate(offer, index) {
           </div>
           <span class="merchant-line">Sold by ${escapeHTML(offer.merchant)}</span>
         </div>
-        <a class="buy-button" href="${escapeHTML(offer.checkoutUrl)}" target="_blank" rel="noreferrer">▣ Buy now</a>
+        <a class="buy-button" href="${escapeHTML(offer.checkoutUrl)}" target="_blank" rel="noreferrer" data-checkout="${escapeHTML(offer.id)}">▣ Buy now</a>
         <button class="why-button" type="button" data-detail="${offer.id}">
           ${detailsOpen ? "Hide details ^" : "Why this bouquet? ˅"}
         </button>
@@ -594,7 +612,7 @@ function openRefinement() {
 
 function finishRefinement() {
   intakeComplete = true;
-  renderAll();
+  loadLiveOffers(true);
   document.querySelector(".summary-bar").scrollIntoView({ block: "start", behavior: "smooth" });
 }
 
@@ -604,11 +622,13 @@ async function loadLiveOffers(refresh = false) {
   renderAll();
 
   try {
-    const response = await fetch(`/api/offers${refresh ? "?refresh=1" : ""}`);
+    const response = await fetch(`/api/offers?${offerQueryString(refresh)}`);
     if (!response.ok) throw new Error(`Offer fetch failed with HTTP ${response.status}`);
     const payload = await response.json();
+    latestToolResult = payload;
     offers = payload.offers || [];
     sourceStatus = payload.sourceStatus || [];
+    selectedOfferId = ensureSelectedOffer(selectedOfferId, offers);
     offersLoading = false;
     fetchError = "";
   } catch (error) {
@@ -619,6 +639,223 @@ async function loadLiveOffers(refresh = false) {
   }
 
   renderAll();
+}
+
+function offerQueryString(refresh = false) {
+  const params = new URLSearchParams({
+    flowerType: criteria.flowerType,
+    location: userContext.locale.city || "Berlin",
+    address: criteria.address,
+    deliveryDate: criteria.deliveryDate
+  });
+
+  if (criteria.budgetMin !== null) params.set("budgetMin", String(criteria.budgetMin));
+  if (criteria.budgetMax !== null) params.set("budgetMax", String(criteria.budgetMax));
+  if (refinement.occasion) params.set("occasion", refinement.occasion);
+  if (refinement.relationship) params.set("relationship", refinement.relationship);
+  if (refinement.loveColours.size) params.set("lovedColors", [...refinement.loveColours].join(","));
+  if (refinement.avoidColours.size) params.set("avoidedColors", [...refinement.avoidColours].join(","));
+  if (refinement.aesthetic) params.set("style", refinement.aesthetic);
+  if (refresh) params.set("refresh", "1");
+
+  return params.toString();
+}
+
+function selectedOffer() {
+  return rankedOffers().find((offer) => offer.id === selectedOfferId) || null;
+}
+
+function recommendedOffer() {
+  return rankedOffers()[0] || null;
+}
+
+function ensureSelectedOffer(offerId, currentOffers) {
+  if (currentOffers.some((offer) => offer.id === offerId)) return offerId;
+  return currentOffers[0]?.id || "";
+}
+
+function selectOffer(offerId, reason = "selected") {
+  if (!offers.some((offer) => offer.id === offerId)) return;
+  selectedOfferId = offerId;
+  if (reason !== "checkout") checkoutIntent = null;
+  renderOffers();
+  publishWidgetState(reason);
+}
+
+function checkoutPayload(offer) {
+  return {
+    mcpd: "flowera.procurement.v1",
+    tool: "searchFlowers",
+    merchantId: offer.id,
+    operation: offer.mode,
+    productUrl: offer.productUrl,
+    sourceUrl: offer.sourceUrl,
+    checkoutUrl: offer.checkoutUrl,
+    refinement: serializeRefinement(),
+    delivery: {
+      address: criteria.address,
+      date: criteria.deliveryDate
+    },
+    item: {
+      name: offer.product,
+      total: Number(total(offer).toFixed(2)),
+      estimatedLongevityDays: offer.longevity
+    },
+    status: "live_page_fetch"
+  };
+}
+
+function serializeRefinement() {
+  return {
+    occasion: refinement.occasion,
+    occasionNote: refinement.occasionNote,
+    relationship: refinement.relationship,
+    gender: refinement.gender,
+    age: refinement.age,
+    aesthetic: refinement.aesthetic,
+    loveColours: [...refinement.loveColours],
+    avoidColours: [...refinement.avoidColours],
+    palette: refinement.palette
+  };
+}
+
+function buildWidgetState() {
+  const selected = selectedOffer();
+  const recommended = recommendedOffer();
+  return {
+    version: widgetStateVersion,
+    criteria: {
+      flowerType: criteria.flowerType,
+      location: userContext.locale.city || "Berlin",
+      address: criteria.address,
+      budgetMin: criteria.budgetMin,
+      budgetMax: criteria.budgetMax,
+      deliveryDate: criteria.deliveryDate,
+      recipients: criteria.recipients,
+      rawIntent: userContext.rawIntent
+    },
+    refinement: serializeRefinement(),
+    selectedOfferId: selected?.id || "",
+    selectedOffer: summarizeOffer(selected),
+    recommendedOfferId: recommended?.id || "",
+    recommendedOffer: summarizeOffer(recommended),
+    checkoutIntent,
+    toolResult: latestToolResult
+      ? {
+          tool: latestToolResult.tool,
+          recommendedOfferId: latestToolResult.recommendedOfferId,
+          reason: latestToolResult.reason,
+          fetchedAt: latestToolResult.fetchedAt,
+          cached: latestToolResult.cached
+        }
+      : null,
+    sourceStatus,
+    offersCount: offers.length,
+    loading: offersLoading,
+    error: fetchError,
+    intakeComplete
+  };
+}
+
+function summarizeOffer(offer) {
+  if (!offer) return null;
+  return {
+    id: offer.id,
+    merchant: offer.merchant,
+    product: offer.product,
+    total: Number(total(offer).toFixed(2)),
+    match: offer.match,
+    checkoutUrl: offer.checkoutUrl,
+    productUrl: offer.productUrl || offer.sourceUrl,
+    fit: offer.fit
+  };
+}
+
+function publishWidgetState(reason = "updated") {
+  widgetStateVersion += 1;
+  const state = buildWidgetState();
+  state.version = widgetStateVersion;
+  state.reason = reason;
+  window.FloweraWidgetState = state;
+  if (nodes.widgetState) nodes.widgetState.textContent = JSON.stringify(state);
+  window.dispatchEvent(new CustomEvent("flowera:widget-state", { detail: state }));
+  widgetStateSubscribers.forEach((subscriber) => subscriber(state));
+  publishToHost(state);
+}
+
+function publishToHost(state) {
+  try {
+    window.skybridge?.setWidgetState?.(state);
+    window.openai?.setWidgetState?.({
+      modelContent: state,
+      privateContent: state
+    });
+    if (window.parent && window.parent !== window) {
+      window.parent.postMessage({ type: "flowera:widget-state", state }, "*");
+    }
+  } catch {
+    // Host bridges are optional in local browser mode.
+  }
+}
+
+window.FloweraWidget = {
+  getState: () => buildWidgetState(),
+  setCriteria(nextCriteria = {}) {
+    Object.assign(criteria, {
+      flowerType: valueOrCurrent(nextCriteria, "flowerType", criteria.flowerType),
+      address: valueOrCurrent(nextCriteria, "address", criteria.address),
+      budgetMin: valueOrCurrent(nextCriteria, "budgetMin", criteria.budgetMin),
+      budgetMax: valueOrCurrent(nextCriteria, "budgetMax", criteria.budgetMax),
+      deliveryDate: valueOrCurrent(nextCriteria, "deliveryDate", criteria.deliveryDate),
+      recipients: valueOrCurrent(nextCriteria, "recipients", criteria.recipients)
+    });
+    if (Object.prototype.hasOwnProperty.call(nextCriteria, "location")) userContext.locale.city = nextCriteria.location || "";
+    selectedOfferId = "";
+    checkoutIntent = null;
+    loadLiveOffers(true);
+  },
+  setRefinement(nextRefinement = {}) {
+    Object.assign(refinement, {
+      occasion: valueOrCurrent(nextRefinement, "occasion", refinement.occasion),
+      occasionNote: valueOrCurrent(nextRefinement, "occasionNote", refinement.occasionNote),
+      relationship: valueOrCurrent(nextRefinement, "relationship", refinement.relationship),
+      gender: valueOrCurrent(nextRefinement, "gender", refinement.gender),
+      age: valueOrCurrent(nextRefinement, "age", refinement.age),
+      aesthetic: valueOrCurrent(nextRefinement, "aesthetic", nextRefinement.style ?? refinement.aesthetic),
+      palette: valueOrCurrent(nextRefinement, "palette", refinement.palette)
+    });
+    if (nextRefinement.loveColours || nextRefinement.lovedColors) {
+      refinement.loveColours = new Set(toColourArray(nextRefinement.loveColours || nextRefinement.lovedColors));
+    }
+    if (nextRefinement.avoidColours || nextRefinement.avoidedColors) {
+      refinement.avoidColours = new Set(toColourArray(nextRefinement.avoidColours || nextRefinement.avoidedColors));
+    }
+    selectedOfferId = "";
+    checkoutIntent = null;
+    loadLiveOffers(true);
+  },
+  selectOffer,
+  clearCheckoutIntent() {
+    checkoutIntent = null;
+    publishWidgetState("checkout_cleared");
+  },
+  subscribe(subscriber) {
+    widgetStateSubscribers.add(subscriber);
+    subscriber(buildWidgetState());
+    return () => widgetStateSubscribers.delete(subscriber);
+  }
+};
+
+function valueOrCurrent(source, key, currentValue) {
+  return Object.prototype.hasOwnProperty.call(source, key) ? source[key] : currentValue;
+}
+
+function toColourArray(value) {
+  if (Array.isArray(value)) return value;
+  return String(value || "")
+    .split(/[,/ ]+/)
+    .map((item) => item.trim())
+    .filter(Boolean);
 }
 
 function escapeHTML(value) {
@@ -711,6 +948,23 @@ document.addEventListener("click", (event) => {
     else openDetails.add(id);
     renderOffers();
   }
+
+  const offerCard = event.target.closest("[data-offer-id]");
+  const checkoutLink = event.target.closest("[data-checkout]");
+
+  if (checkoutLink) {
+    const offer = rankedOffers().find((item) => item.id === checkoutLink.dataset.checkout);
+    if (offer) {
+      selectedOfferId = offer.id;
+      checkoutIntent = checkoutPayload(offer);
+      publishWidgetState("checkout_opened");
+    }
+    return;
+  }
+
+  if (offerCard && !detailButton) {
+    selectOffer(offerCard.dataset.offerId);
+  }
 });
 
 function toggleSetValue(set, value) {
@@ -793,6 +1047,8 @@ function resetRefinementForIntent() {
   skippedSteps.clear();
   nodes.occasionNote.value = "";
   openDetails.clear();
+  selectedOfferId = "";
+  checkoutIntent = null;
 }
 
 function parseIntent(value) {

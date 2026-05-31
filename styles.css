@@ -213,10 +213,18 @@ button {
   border: 1px solid var(--line);
   border-radius: var(--radius);
   background: var(--card);
+  cursor: pointer;
 }
 
 .bouquet-card.is-featured {
   box-shadow: 0 0 0 1px rgba(33, 79, 46, 0.16), var(--shadow);
+}
+
+.bouquet-card.is-selected {
+  border-color: rgba(126, 45, 58, 0.68);
+  box-shadow:
+    0 0 0 2px rgba(126, 45, 58, 0.12),
+    var(--shadow);
 }
 
 .bouquet-media {
