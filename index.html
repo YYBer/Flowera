@@ -76,6 +76,16 @@
                   Colors to avoid
                   <input id="avoidColors" type="text" placeholder="e.g. red, purple" />
                 </label>
+
+                <label class="color-field">
+                  Min budget
+                  <input id="budgetMin" type="number" min="0" step="1" />
+                </label>
+
+                <label class="color-field">
+                  Max budget
+                  <input id="budgetMax" type="number" min="0" step="1" />
+                </label>
               </div>
 
               <div class="meaning-note" id="meaningNote"></div>
@@ -121,6 +131,7 @@
       <div class="drawer-body" id="drawerBody"></div>
     </aside>
 
+    <script id="flowera-widget-state" type="application/json">{}</script>
     <script src="./app.js"></script>
   </body>
 </html>

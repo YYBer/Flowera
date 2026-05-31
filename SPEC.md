@@ -221,12 +221,28 @@ The Skybridge widget should expose state that the assistant can read:
 }
 ```
 
+The local UI now publishes this state through four compatible surfaces:
+
+- `window.FloweraWidgetState`: latest state snapshot.
+- `window.FloweraWidget.getState()`: imperative getter for the host or test harness.
+- `flowera:widget-state`: browser event emitted after each meaningful state change.
+- `#flowera-widget-state`: JSON script element mirroring the latest snapshot.
+
 State updates should happen when the user:
 
 - selects or deselects an offer
 - changes occasion, relationship, colors, or style
+- changes min or max budget
 - opens checkout handoff
 - refreshes live offers
+
+The widget also exposes host-callable helpers:
+
+- `window.FloweraWidget.setCriteria(criteria)`
+- `window.FloweraWidget.setRefinement(refinement)`
+- `window.FloweraWidget.selectOffer(offerId)`
+- `window.FloweraWidget.clearCheckoutIntent()`
+- `window.FloweraWidget.subscribe(callback)`
 
 ## Data Source Strategy
 
@@ -281,4 +297,3 @@ Each adapter should return a normalized internal product shape:
 4. Add `POST /api/checkout-intent`.
 5. Update `skybridge.mcpd.json` to describe the real tools.
 6. Migrate or wrap the app with a Skybridge MCP server when deployment credentials are ready.
-

@@ -42,7 +42,14 @@
     {
       "name": "FlowerAggregatorView",
       "path": "index.html",
-      "presentation": "chat-embedded-horizontal-offer-cards"
+      "presentation": "chat-embedded-horizontal-offer-cards",
+      "state": {
+        "global": "window.FloweraWidgetState",
+        "api": "window.FloweraWidget",
+        "event": "flowera:widget-state",
+        "jsonElement": "#flowera-widget-state",
+        "postMessageType": "flowera:widget-state"
+      }
     }
   ],
   "deployment": {
