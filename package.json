@@ -3,8 +3,11 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "start": "node server.js",
-    "dev": "skybridge dev"
+    "start:local": "node server.js",
+    "start": "skybridge start",
+    "dev": "skybridge dev",
+    "build": "skybridge build",
+    "deploy": "alpic deploy --runtime node24"
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.29.0",
